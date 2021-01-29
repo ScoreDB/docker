@@ -1,0 +1,56 @@
+# This is a Docker Compose file to deploy
+# the ScoreDB v3 stack with one command.
+
+services:
+  
+  # The API server
+  server:
+    image: scoredb/server
+    init: true
+    restart: always
+    env_file: server.env
+    environment:
+      - APP_URL=http://localhost:8000
+      - DB_HOST=db
+      - DB_PASSWORD=kxW9ExLP1O
+      - BROADCAST_DRIVER=redis
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - SESSION_DRIVER=redis
+      - REDIS_HOST=redis
+    ports:
+      - "8000:80"
+    links:
+      - db
+      - redis
+  
+  # The web UI
+  web:
+    image: scoredb/web
+    init: true
+    restart: always
+    environment:
+      - PROXY_API_URL=http://server:80
+    ports:
+      - "3000:3000"
+    links:
+      - server
+  
+  # Database
+  db:
+    restart: always
+    image: "postgres:13"
+    environment:
+      - POSTGRES_USER=scoredb
+      - POSTGRES_PASSWORD=kxW9ExLP1O
+      - POSTGRES_DB=scoredb
+    volumes:
+      - "scoredb_db_data:/var/lib/postgresql/data"
+  
+  # Redis cache server
+  redis:
+    restart: always
+    image: redis
+
+volumes:
+  scoredb_db_data:
